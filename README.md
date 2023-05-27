@@ -22,7 +22,44 @@ apiservice.apiregistration.k8s.io/v1beta1.metrics.k8s.io created
 ```
 
 
-# Installation of NGINX Ingress Controller (based on NGINX plus) with Helm
+
+
+# Install the NGINX Ingress Controller (Maintained by Kubernetes): You can install the NGINX Ingress Controller on your EKS cluster using a Helm chart. To do this, run the following commands in your terminal:
+
+```
+brew install helm
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+helm install ingress-nginx ingress-nginx/ingress-nginx
+```
+
+These commands will add the NGINX Ingress Controller Helm chart repository, update your local repositories, and install the Ingress Controller on your EKS cluster.
+
+Verify the installation: After installing the Ingress Controller, you can verify that it is running correctly by running the following command in your terminal:
+ 
+```
+kubectl get pods -n ingress-nginx
+```
+
+This command will display the pods running in the ingress-nginx namespace, including the NGINX Ingress Controller pod.
+It did create a Loadbalancer type of service for my IC: 
+
+```
+ % kubectl get pods 
+NAME                                        READY   STATUS    RESTARTS   AGE
+ingress-nginx-controller-6b94c75599-7sjq9   1/1     Running   0          38s
+nginx                                       1/1     Running   0          104m
+  
+% kubectl get svc
+NAME                                 TYPE           CLUSTER-IP      EXTERNAL-IP                                                                  PORT(S)                      AGE
+ingress-nginx-controller             LoadBalancer   10.100.245.69   acf68105edd024bfe9fb72111124bfaf-32909998.ap-southeast-1.elb.amazonaws.com   80:31594/TCP,443:31068/TCP   49s
+ingress-nginx-controller-admission   ClusterIP      10.100.123.13   <none>                                                                       443/TCP                      49s
+kubernetes                           ClusterIP      10.100.0.1      <none>                                                                       
+```
+
+
+
+# Installation of NGINX Ingress Controller (Maintained by NGINX) with Helm
 https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-helm/
 
 Go back to your home directory: 
@@ -89,21 +126,7 @@ By setting controller.ingressClass=nginx-plus, you have specified the new ingres
   Command:
 
   ```
-helm install ingress-plus nginx-stable/nginx-ingress --set controller.ingressClass=nginx-plus --set controller.image.repository=private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress --set controller.nginxplus=true --set controller.appprotect.enable=true --set controller.image.tag=3.0.1 --set controller.serviceAccount.imagePullSecretName=regcred --set controller.service.type=LoadBalancer --set controller.service.httpsPort.nodePort=32137 --set controller.replicaCount=1 --set controller.kind=deployment --set prometheus.create=true --set controller.readyStatus.initialDelaySeconds=30 --set controller.service.externalTrafficPolicy=Cluster
-```
-
-OUTPUT: 
-```
-% helm install ingress-plus nginx-stable/nginx-ingress --set controller.ingressClass=nginx-plus --set controller.image.repository=private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress --set controller.nginxplus=true --set controller.appprotect.enable=true --set controller.image.tag=3.0.1 --set controller.serviceAccount.imagePullSecretName=regcred --set controller.service.type=LoadBalancer --set controller.service.httpsPort.nodePort=32137 --set controller.replicaCount=1 --set controller.kind=deployment --set prometheus.create=true --set controller.readyStatus.initialDelaySeconds=30 --set controller.service.externalTrafficPolicy=Cluster
-
-NAME: ingress-plus
-LAST DEPLOYED: Fri Mar  3 17:17:19 2023
-NAMESPACE: default
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-The NGINX Ingress Controller has been installed.
+helm install ingress-plus nginx-stable/nginx-ingress --set controller.ingressClass=nginx-plus --set controller.image.repository=private-registry.nginx.com/nginx-ic/nginx-plus-ingress --set controller.nginxplus=true --set controller.image.tag=3.1.1 --set controller.serviceAccount.imagePullSecretName=regcred --set controller.service.type=LoadBalancer --set controller.service.httpsPort.nodePort=32137 --set controller.replicaCount=1 --set controller.kind=deployment --set prometheus.create=true --set controller.readyStatus.initialDelaySeconds=30 --set controller.service.externalTrafficPolicy=Cluster
 
  e.ausente@C02DR4L1MD6M eks-play % kubectl get ingressclass
 NAME         CONTROLLER                     PARAMETERS   AGE
@@ -118,3 +141,20 @@ ingress-plus-nginx-ingress           LoadBalancer   10.100.249.211   a31ce143913
 kubernetes                           ClusterIP      10.100.0.1       <none>                                                                        443/TCP                      6h51m
 nginx-dep                            ClusterIP      10.100.208.228   <none>                                                                        80/TCP  
 ```
+
+
+Now execute the kubectl top: 
+
+```
+e.ausente@C02DR4L1MD6M ~ % kubectl top pod
+NAME                                                     CPU(cores)   MEMORY(bytes)          
+ingress-nginx-controller-6b8bfd7f69-7cb6n                1m           71Mi            
+ingress-plus-nginx-ingress-controller-6c7b649d6d-rmrr8   1m           17Mi            
+
+```
+
+Based on the output of the kubectl top pod command, it appears that both the ingress-nginx-controller and ingress-plus-nginx-ingress-controller pods are utilizing minimal CPU and memory resources.
+
+In terms of resource utilization, both pods are consuming very low amounts of CPU, indicated by the 1m value. This suggests that the CPU usage is minimal, with each pod using 1 milliCPU (1/1000th of a CPU core).
+
+Regarding memory usage, the ingress-nginx-controller pod is utilizing approximately 71MB of memory, while the ingress-plus-nginx-ingress-controller pod is using around 17MB of memory.
